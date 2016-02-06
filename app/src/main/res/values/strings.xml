@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Flickr</string>
+    <string name="action_settings">Settings</string>
+    <string name="Image_view">Image_view</string>
+    <string name="myImage">My Image</string>
+    <string name="search_hint">Enter your Search Parameters</string>
+    <string name="Imagebutton">IMagebutton</string>
+    <string name="title_activity_user_">More photos from that user</string>
+    <string name="change_color">Change Colour</string>
+
+    <string name="title_activity_logo">LogoActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="title_activity_splash">SplashActivity</string>
+</resources>
