@@ -12,10 +12,9 @@ public class SplashActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
         getSupportActionBar().hide();
-        getActionBar().hide();
 
          /* New Handler to start the Menu-Activity
-         * and close this Splash-Screen after some seconds.*/
+         * and close this Splash-Screen after 3 seconds.*/
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {

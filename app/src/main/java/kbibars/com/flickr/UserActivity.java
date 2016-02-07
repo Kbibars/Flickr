@@ -22,19 +22,19 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 
-import Utility.Const_Var;
-import Utility.MyAdapter;
+import Utility.Url;
+import Utility.RecyclerViewAdapter;
 import Utility.SingleResponse;
 import cz.msebera.android.httpclient.Header;
 
-public class User_Activity extends ActionBarActivity {
+public class UserActivity extends ActionBarActivity {
     /*Declarations*/
     public ProgressBar progressBar = null;
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
     private RecyclerView mUSerRecyclerView;
     public String mUserID = null;
-    ProgressDialog dialog;
+    public ProgressDialog dialog;
     /*Statics*/
     private static final String RESPONSE_TAG_PHOTO = "photo";
     private static final String RESPONSE_ATTR_ID = "id";
@@ -49,34 +49,33 @@ public class User_Activity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user);
+
+        /*FetchExtras from the previous Activity and gstore the userID*/
         Bundle mBundle = getIntent().getExtras();
-        /*FetchExtras and pull the User ID*/
         if (mBundle != null && mBundle.containsKey("mOwnerID")) {
             mUserID = mBundle.getString("mOwnerID");
         }
-        /*Checks for the app color */
-        changeColor();
-            /*Calling the View */
+
+        /*Definitions & Initializations*/
         mUSerRecyclerView = (RecyclerView) findViewById(R.id.user_recycler_view);
         mLayoutManager = new LinearLayoutManager(this);
         mUSerRecyclerView.setLayoutManager(mLayoutManager);
         progressBar = (ProgressBar) findViewById(R.id.mProgressBar);
-
-                /*Declarations*/
-        progressBar = (ProgressBar) findViewById(R.id.mProgressBar);
-        fetchData();
+        changeColor();
+        /*Fetch the images from the url using the userID*/
+        fetchData(mUserID);
     }
 
-    private void fetchData() {
+    private void fetchData(String mUserID) {
         AsyncHttpClient client = new AsyncHttpClient();
-        Const_Var const_var = new Const_Var();
+        Url const_var = new Url();
         client.post(getApplicationContext(), "https://api.flickr.com/services/rest/?method=" + const_var.getMethod() + "&api_key=" + const_var.getApi_key() + "&format=" + const_var.getFormat()
                         + "&user_id=" + mUserID + "&per_page=500",
                 null, new TextHttpResponseHandler() {
                     @Override
                     public void onStart() {
                         super.onStart();
-                        dialog = ProgressDialog.show(User_Activity.this, "", "Loading...", true);
+                        dialog = ProgressDialog.show(UserActivity.this, "", "Loading...", true);
                         dialog.setCancelable(true);
                         progressBar.setVisibility(View.VISIBLE);
                     }
@@ -97,7 +96,7 @@ public class User_Activity extends ActionBarActivity {
 
                             ArrayList<SingleResponse> mylist = parsePhotos(xpp, new ArrayList<SingleResponse>());
 
-                            mAdapter = new MyAdapter(mylist, getApplicationContext(), 1);
+                            mAdapter = new RecyclerViewAdapter(mylist, getApplicationContext(), 1);
                             mAdapter.notifyDataSetChanged();
                             mUSerRecyclerView.setAdapter(mAdapter);
 

@@ -3,7 +3,7 @@ package Utility;
 /**
  * Created by KBibars on 2/5/2016.
  */
-public class Const_Var {
+public class Url {
 
     String method="flickr.photos.search";
     String api_key="1bedf73110dd19f78411e9d142c59812";

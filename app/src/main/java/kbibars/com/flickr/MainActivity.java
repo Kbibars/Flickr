@@ -1,7 +1,6 @@
 package kbibars.com.flickr;
 
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -31,14 +30,13 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 
-import Utility.Const_Var;
-import Utility.MyAdapter;
+import Utility.Url;
+import Utility.RecyclerViewAdapter;
 import Utility.SingleResponse;
 import cz.msebera.android.httpclient.Header;
 
 public class MainActivity extends ActionBarActivity {
-    /*Notes*/
-/*    MainActivity is 1    UserActivity is 2*/
+/*Notes* MainActivity =1 UserActivity =2 */
 
     /*Statics*/
     private static final String RESPONSE_TAG_PHOTO = "photo";
@@ -48,53 +46,54 @@ public class MainActivity extends ActionBarActivity {
     private static final String RESPONSE_ATTR_FARM = "farm";
     private static final String RESPONSE_ATTR_TITLE = "title";
     private static final String RESPONSE_ATTR_OWNER = "owner";
+
     /*Declarations*/
-    public ProgressBar progressBar = null;
-    public ArrayList<SingleResponse> mSingleResponse = null;
-    ProgressDialog dialog;
-    EditText mSearchTextView;
-    Button mImageViewButton;
-    SharedPreferences prefs;
-    private RecyclerView mRecyclerView;
+    private ProgressBar progressBar = null;
+    private RecyclerView mRecyclerView = null;
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
-    private LinearLayout activity_linear_layout;
+    private LinearLayout activity_linear_layout = null;
+    public ArrayList<SingleResponse> mSingleResponse = null;
+    public ProgressDialog dialog = null;
+    public EditText mSearchTextView = null;
+    public Button mImageViewButton = null;
+    public SharedPreferences prefs = null;
+    public int colour;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        /*Calling the View */
+
+        /*Definitions & Initializations*/
         mRecyclerView = (RecyclerView) findViewById(R.id.my_recycler_view);
-        /*Declarations*/
         mLayoutManager = new LinearLayoutManager(this);
-        mRecyclerView.setLayoutManager(mLayoutManager);
         mSearchTextView = (EditText) findViewById(R.id.mSearchTextview);
         mImageViewButton = (Button) findViewById(R.id.button);
         progressBar = (ProgressBar) findViewById(R.id.mProgressBar);
         activity_linear_layout = (LinearLayout) findViewById(R.id.activity_linear_layout);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-        /*Setting some background colors*/
-        setcolor();
+        /*Handling the RecyclerView*/
+        mRecyclerView.setLayoutManager(mLayoutManager);
 
-        /*Hiding the Keyboard @start*/
-        progressBar.setVisibility(View.GONE);
-        this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
-        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
+        /*Initializing the current View*/
+        initView();
 
-
-       /* Click Listner for button */
         mImageViewButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                InputMethodManager inputMethodManager=(InputMethodManager)getSystemService(MainActivity.INPUT_METHOD_SERVICE);
+                inputMethodManager.hideSoftInputFromWindow(mSearchTextView.getWindowToken(), InputMethodManager.RESULT_UNCHANGED_SHOWN);
                 /*Check if the keyword has been used before*/
                 String cacheChecker = prefs.getString(mSearchTextView.getText().toString(), "NSF");/*No String Found*/
-                if (cacheChecker.equals("NSF")) {
+                /*Call the method to fetch data from the URL*/
+                if (cacheChecker.equals("NSF"))
                     fetchData(mSearchTextView.getText());
-                } else {
+                else {
                     try {
-               /*         Call the Load adapter function*/
+               /*Call a method to load data from the cached data*/
                         loadAdapter(cacheChecker);
                     } catch (XmlPullParserException e) {
                         e.printStackTrace();
@@ -103,23 +102,15 @@ public class MainActivity extends ActionBarActivity {
                     }
                 }
 
-
-
-                /*Hide the keyboard after button press to show all page */
-                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.hideSoftInputFromWindow(mSearchTextView.getWindowToken(),
-                        InputMethodManager.RESULT_UNCHANGED_SHOWN);
             }
         });
-
 
     }
 
     private void fetchData(final Editable mSearchText) {
         AsyncHttpClient client = new AsyncHttpClient();
-        Const_Var const_var = new Const_Var();
-        String s = "https://api.flickr.com/services/rest/?method=" + const_var.getMethod() + "&api_key=" + const_var.getApi_key() + "&format=" + const_var.getFormat()
-                + "&text=" + mSearchText;
+        Url const_var = new Url();
+        /*Use AsyncHttpClient to call the constructed URL and get response from the server in XML fotmat*/
         client.post(getApplicationContext(), "https://api.flickr.com/services/rest/?method=" + const_var.getMethod() + "&api_key=" + const_var.getApi_key() + "&format=" + const_var.getFormat()
                         + "&text=" + mSearchText + "&per_page=500",
                 null, new TextHttpResponseHandler() {
@@ -128,7 +119,7 @@ public class MainActivity extends ActionBarActivity {
                         super.onStart();
                         dialog = ProgressDialog.show(MainActivity.this, "", "Loading...", true);
                         dialog.setCancelable(true);
-                        progressBar.setVisibility(View.VISIBLE);
+                        // progressBar.setVisibility(View.VISIBLE);
                     }
 
 
@@ -140,13 +131,13 @@ public class MainActivity extends ActionBarActivity {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, String responseString) {
 
-                            /*Save  the responseString in shared preferences */
+                        /*Save  the responseString in shared preferences */
                         SharedPreferences.Editor editor = prefs.edit();
-                        editor.putString(mSearchText.toString(), responseString); // value to store
+                        editor.putString(mSearchText.toString(), responseString);
                         editor.apply();
 
                         try {
-                            /*Call the adapter filling method*/
+                            /*Call a method to load data from the responseString*/
                             loadAdapter(responseString);
                         } catch (XmlPullParserException e) {
                             e.printStackTrace();
@@ -161,7 +152,7 @@ public class MainActivity extends ActionBarActivity {
                     public void onFinish() {
                         dialog.dismiss();
                         super.onFinish();
-                        progressBar.setVisibility(View.GONE);
+                        //  progressBar.setVisibility(View.GONE);
                     }
 
                 });
@@ -194,16 +185,13 @@ public class MainActivity extends ActionBarActivity {
             throws XmlPullParserException, IOException {
         int type;
         String name;
-
-
         final int depth = parser.getDepth();
-
+        /*Parse the XML and save each image data in an arraylist of singleResponse*/
         while (((type = parser.next()) != XmlPullParser.END_TAG ||
                 parser.getDepth() > depth) && type != XmlPullParser.END_DOCUMENT) {
             if (type != XmlPullParser.START_TAG) {
                 continue;
             }
-
             name = parser.getName();
             if (RESPONSE_TAG_PHOTO.equals(name)) {
                 final SingleResponse singleResponse = new SingleResponse();
@@ -222,34 +210,32 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public void changeColor() {
-         /*Change the colour of mRecyclerView background*/
-
-        int colour = prefs.getInt("colour", 0);
+        /*Change the colour of mRecyclerView background*/
+        colour = prefs.getInt("colour", 0);
         if (colour == 0) {
             activity_linear_layout.setBackgroundResource(R.drawable.background);
             mRecyclerView.setBackgroundResource(R.drawable.background);
             SharedPreferences.Editor editor = prefs.edit();
-            editor.putInt("colour", 1); // value to store
+            editor.putInt("colour", 1);
             editor.apply();
-        } else if ( colour==1) {
+        } else if (colour == 1) {
             activity_linear_layout.setBackgroundResource(R.drawable.background_2_);
             mRecyclerView.setBackgroundResource(R.drawable.background_2_);
             SharedPreferences.Editor editor = prefs.edit();
-            editor.putInt("colour", 0); // value to store
+            editor.putInt("colour", 0);
             editor.apply();
         }
     }
 
     public void setcolor() {
-         /*Change the colour of mRecyclerView background*/
-
-        int colour = prefs.getInt("colour", 0);
+        /*Change the colour of mRecyclerView background*/
+        colour = prefs.getInt("colour", 0);
         if (colour == 0) {
-            activity_linear_layout.setBackgroundResource(R.drawable.background);
-            mRecyclerView.setBackgroundResource(R.drawable.background);
-        } else if ( colour==1) {
             activity_linear_layout.setBackgroundResource(R.drawable.background_2_);
             mRecyclerView.setBackgroundResource(R.drawable.background_2_);
+        } else if (colour == 1) {
+            activity_linear_layout.setBackgroundResource(R.drawable.background);
+            mRecyclerView.setBackgroundResource(R.drawable.background);
         }
     }
 
@@ -259,12 +245,20 @@ public class MainActivity extends ActionBarActivity {
         XmlPullParser xpp = factory.newPullParser();
         xpp.setInput(new StringReader(responseString));
 
-        ArrayList<SingleResponse> mylist = parsePhotos(xpp, new ArrayList<SingleResponse>());
+        ArrayList<SingleResponse> singleResponses = parsePhotos(xpp, new ArrayList<SingleResponse>());
 
-        mAdapter = new MyAdapter(mylist, getApplicationContext(), 1);
+        mAdapter = new RecyclerViewAdapter(singleResponses, getApplicationContext(), 1);
         mAdapter.notifyDataSetChanged();
         mRecyclerView.setAdapter(mAdapter);
 
 
+    }
+
+    public void initView() {
+        setcolor();
+        /*Hiding the Keyboard @AMainActivity Creation*/
+        progressBar.setVisibility(View.GONE);
+        this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
     }
 }
